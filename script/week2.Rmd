@@ -9,22 +9,33 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Task 1: import Data
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Create a new R- (or RMarkdown/Quarto-) file and begin with the following lines of code (adjust the path to your csv file accordingly).
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+### load the libraries
 
-```{r cars}
-summary(cars)
+```{r}
+library(readr) # to import tabular data (e.g. csv)
+library(dplyr) # to manipulate (tabular) data
+library(ggplot2) # to visualize data
+library(sf) # to handle spatial vector data
+library(terra) # To handle raster data
+library(lubridate) # To handle dates and times
 ```
 
-## Including Plots
+### Import the downloaded csv
 
-You can also embed plots, for example:
+```{r}
+wildschwein_BE <- read_delim("data/wildschwein_BE_2056.csv", ",")
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+wildschwein_BE <- st_as_sf(wildschwein_BE, coords = c("E", "N"), crs = 2056, remove = FALSE)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Note:
+
+-   that this dataset is already converted to EPSG 2056
+
+-   the coordinates are stored in the columns (`E`/`N`)
+
+-   setting `remove = FALSE` preserves the original (`E`/`N`) columns, which come in handy later on
