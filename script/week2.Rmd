@@ -53,7 +53,7 @@ Calculate the time difference between subsequent rows as described in the demo. 
 ```{r}
 wildschwein_diff <- wildschwein_BE |> 
   group_by(TierName) |> 
-  mutate(time_diff = as.integer(difftime(DatetimeUTC, lag(DatetimeUTC, n = 1, default = NA, order_by = DatetimeUTC), units = "secs")))
+  mutate(time_diff = as.integer(difftime(DatetimeUTC, lag(DatetimeUTC, 1, default = NA, order_by = DatetimeUTC), units = "secs")))
 ```
 
 Now inspect your data in more detail. Try to answer the following questions:
@@ -86,3 +86,35 @@ ggplot(wildschwein_diff, aes(DatetimeUTC, time_diff, color=TierName)) +
 Here are some exemplary visualisation you could produce to answer these questions. Can you now answer the above questions?
 
 After completing the task, commit your changes to git using a good commit message (e.g. `completed task 1`).
+
+## **Task 3: Deriving movement parameters I: Speed**
+
+In this task we will derive some additional movement parameters from our trajectories. So far our trajectories only consist of a list of time-stamped spatial locations. So let's calculate the animal's steplength based on the Euclidean distance between two subsequent locations.
+
+You can calculate the Euclidean distance with the following formula:
+
+$$distance = \sqrt{(E1-E2)^2+(N1-N2)^2}$$
+
+-   `E1`, `N1` refers to the current location
+
+-   `E2`, `N2` refers to the consecutive location
+
+-   you can use `lead(E,1)` to address `E2`
+
+-   store the output in a new column (e.g. `steplength`)
+
+```{r}
+wildschwein_temp <- wildschwein_diff |> 
+  mutate(steplength = sqrt((E - lead(E, 1))^2 + (N - lead(N, 1))^2))
+```
+
+Now calculate the animals' speed between consecutive locations based on `steplength` and the `timelag` (from the last task). What speed unit do you get?
+
+```{r}
+wildschwein_temp <- wildschwein_temp |> 
+  mutate(speed = steplength / time_diff)
+```
+
+The unit of the speed is meters per second.
+
+After completing the task, commit your changes to git using a good commit message.
