@@ -119,15 +119,21 @@ $$distance = \sqrt{(E1-E2)^2+(N1-N2)^2}$$
 -   store the output in a new column (e.g. `steplength`)
 
 ```{r}
-wildschwein_temp <- wildschwein_diff |> 
+wildschwein_diff <- wildschwein_diff |> 
+  group_by(TierName) |> 
   mutate(steplength = sqrt((E - lead(E, 1))^2 + (N - lead(N, 1))^2))
 ```
 
 Now calculate the animals' speed between consecutive locations based on `steplength` and the `timelag` (from the last task). What speed unit do you get?
 
 ```{r}
-wildschwein_temp <- wildschwein_temp |> 
+wildschwein_diff <- wildschwein_diff |> 
+  group_by(TierName) |> 
   mutate(speed = steplength / time_diff)
+
+ggplot(wildschwein_diff, aes(speed)) +
+  geom_histogram() +
+  scale_x_log10()
 ```
 
 The unit of the speed is meters per second.
@@ -195,31 +201,40 @@ To finish the task, compare the speeds visually in a line plot and also visualiz
 ```{r}
 #comparing 1 minute and 3 minute Datapoints
 ggplot() +
-  geom_point(data=caro60, aes(E, N), color='blue') +
-  geom_point(data=caro_3, aes(E, N), color='green') +
-  geom_path(data=caro60, aes(E, N), color='blue') +
-  geom_path(data=caro_3, aes(E, N), color='green')
+  geom_point(data=caro60, aes(E, N, color = "caro60")) +
+  geom_point(data=caro_3, aes(E, N, color="caro_3")) +
+  geom_path(data=caro60, aes(E, N, color="caro60")) +
+  geom_path(data=caro_3, aes(E, N, color="caro_3")) +
+  labs(color="Trajectory") +
+  scale_color_manual(values = mycolors4) +
+  theme_linedraw()
 
 #comparing 1 minute and 6 minute Datapoints
 ggplot() +
-  geom_point(data=caro60, aes(E, N), color='blue') +
-  geom_point(data=caro_6, aes(E, N), color='green') +
-  geom_path(data=caro60, aes(E, N), color='blue') +
-  geom_path(data=caro_6, aes(E, N), color='green')
+  geom_point(data=caro60, aes(E, N, color="caro60")) +
+  geom_point(data=caro_6, aes(E, N, color="caro_6")) +
+  geom_path(data=caro60, aes(E, N, color="caro60")) +
+  geom_path(data=caro_6, aes(E, N, color="caro_6")) +
+  labs(color="Trajectory") +
+  scale_color_manual(values = mycolors4) +
+  theme_linedraw()
 
 #comparing 1 minute and 9 minute Datapoints
 ggplot() +
-  geom_point(data=caro60, aes(E, N), color='blue') +
-  geom_point(data=caro_9, aes(E, N), color='green') +
-  geom_path(data=caro60, aes(E, N), color='blue') +
-  geom_path(data=caro_9, aes(E, N), color='green')
+  geom_point(data=caro60, aes(E, N, color="caro60")) +
+  geom_point(data=caro_9, aes(E, N, color="caro_9")) +
+  geom_path(data=caro60, aes(E, N, color="caro60")) +
+  geom_path(data=caro_9, aes(E, N, color="caro_9")) +
+  labs(color="Trajectory") +
+  scale_color_manual(values = mycolors4) +
+  theme_linedraw()
 
 #compating speed and time over all Datasets
 ggplot() +
-  geom_line(data=caro60, aes(DatetimeUTC, speed)) +
-  geom_line(data=caro_9, aes(DatetimeUTC, speed)) +
-  geom_line(data=caro_6, aes(DatetimeUTC, speed)) +
-  geom_line(data=caro_3, aes(DatetimeUTC, speed)) +
+  geom_line(data=caro60, aes(DatetimeUTC, speed, color="caro60")) +
+  geom_line(data=caro_9, aes(DatetimeUTC, speed, color="caro_9")) +
+  geom_line(data=caro_6, aes(DatetimeUTC, speed, color="caro_6")) +
+  geom_line(data=caro_3, aes(DatetimeUTC, speed, color="caro_3")) +
   scale_color_manual(values = mycolors4) +
   theme_classic()
 
