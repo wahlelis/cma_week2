@@ -22,6 +22,9 @@ library(ggplot2) # to visualize data
 library(sf) # to handle spatial vector data
 library(terra) # To handle raster data
 library(lubridate) # To handle dates and times
+library(RColorBrewer)
+
+mycolors4 <- brewer.pal(4, "BrBG")
 ```
 
 ### Import the downloaded csv
@@ -53,7 +56,7 @@ Calculate the time difference between subsequent rows as described in the demo. 
 ```{r}
 wildschwein_diff <- wildschwein_BE |> 
   group_by(TierName) |> 
-  mutate(time_diff = as.integer(difftime(DatetimeUTC, lag(DatetimeUTC, 1, default = NA, order_by = DatetimeUTC), units = "secs")))
+  mutate(time_diff = as.integer(difftime(lead(DatetimeUTC, 1, default = NA, order_by = DatetimeUTC), DatetimeUTC, units = "secs")))
 ```
 
 Now inspect your data in more detail. Try to answer the following questions:
@@ -69,18 +72,30 @@ count <- wildschwein_BE |>
 -   For how long were the individual tracked? Are there gaps?
 
 ```{r}
-ggplot(wildschwein_BE, aes(DatetimeUTC, TierID)) + 
-  geom_line()
+ggplot(wildschwein_diff, aes(DatetimeUTC, TierName)) + 
+  geom_point()
 ```
 
 -   Were all individuals tracked concurrently or sequentially?
 
+```{r}
+ggplot(wildschwein_BE, aes(DatetimeUTC, TierID)) + 
+  geom_line()
+```
+
 -   What is the temporal sampling interval between the locations?
 
 ```{r}
-ggplot(wildschwein_diff, aes(DatetimeUTC, time_diff, color=TierName)) +
+wildschwein_diff |> 
+  filter(DatetimeUTC < "2014-08-24") |> 
+  ggplot(aes(DatetimeUTC, time_diff, color=TierName)) +
   geom_line() +
   geom_point()
+
+ggplot(wildschwein_diff, aes(time_diff/60)) +
+  geom_histogram(binwidth = 1) +
+  lims(x = c(0, 5000/60)) +
+  scale_y_log10()
 ```
 
 Here are some exemplary visualisation you could produce to answer these questions. Can you now answer the above questions?
@@ -148,28 +163,28 @@ Now calculate `timelag`, `steplength` and `speed` for these data sets, just as y
 ```{r}
 caro_3 <- caro_3 |> 
   mutate(timelag = as.integer(difftime(
-    DatetimeUTC, lag(DatetimeUTC, 1, default = NA, order_by = DatetimeUTC),
+    lead(DatetimeUTC, 1, default = NA, order_by = DatetimeUTC), DatetimeUTC, 
                                        units = "secs"))) |> 
   mutate(steplength = sqrt((E - lead(E, 1))^2 + (N - lead(N, 1))^2)) |>
   mutate(speed = steplength / timelag)
   
 caro_6 <- caro_6 |> 
   mutate(timelag = as.integer(difftime(
-    DatetimeUTC, lag(DatetimeUTC, 1, default = NA, order_by = DatetimeUTC),
+    lead(DatetimeUTC, 1, default = NA, order_by = DatetimeUTC), DatetimeUTC,
                                        units = "secs"))) |> 
   mutate(steplength = sqrt((E - lead(E, 1))^2 + (N - lead(N, 1))^2)) |>
   mutate(speed = steplength / timelag)
 
 caro_9 <- caro_9 |> 
   mutate(timelag = as.integer(difftime(
-    DatetimeUTC, lag(DatetimeUTC, 1, default = NA, order_by = DatetimeUTC),
+    lead(DatetimeUTC, 1, default = NA, order_by = DatetimeUTC), DatetimeUTC,
                                        units = "secs"))) |> 
   mutate(steplength = sqrt((E - lead(E, 1))^2 + (N - lead(N, 1))^2)) |>
   mutate(speed = steplength / timelag)
 
 caro60 <- caro60 |> 
   mutate(timelag = as.integer(difftime(
-    DatetimeUTC, lag(DatetimeUTC, 1, default = NA, order_by = DatetimeUTC),
+    lead(DatetimeUTC, 1, default = NA, order_by = DatetimeUTC), DatetimeUTC,
                                        units = "secs"))) |> 
   mutate(steplength = sqrt((E - lead(E, 1))^2 + (N - lead(N, 1))^2)) |>
   mutate(speed = steplength / timelag)
@@ -177,4 +192,57 @@ caro60 <- caro60 |>
 
 To finish the task, compare the speeds visually in a line plot and also visualize the trajectories in a map (see examples below). Interpret the line plot, what do the different lines for the different temporal granularities tell you?
 
+```{r}
+#comparing 1 minute and 3 minute Datapoints
+ggplot() +
+  geom_point(data=caro60, aes(E, N), color='blue') +
+  geom_point(data=caro_3, aes(E, N), color='green') +
+  geom_path(data=caro60, aes(E, N), color='blue') +
+  geom_path(data=caro_3, aes(E, N), color='green')
+
+#comparing 1 minute and 6 minute Datapoints
+ggplot() +
+  geom_point(data=caro60, aes(E, N), color='blue') +
+  geom_point(data=caro_6, aes(E, N), color='green') +
+  geom_path(data=caro60, aes(E, N), color='blue') +
+  geom_path(data=caro_6, aes(E, N), color='green')
+
+#comparing 1 minute and 9 minute Datapoints
+ggplot() +
+  geom_point(data=caro60, aes(E, N), color='blue') +
+  geom_point(data=caro_9, aes(E, N), color='green') +
+  geom_path(data=caro60, aes(E, N), color='blue') +
+  geom_path(data=caro_9, aes(E, N), color='green')
+
+#compating speed and time over all Datasets
+ggplot() +
+  geom_line(data=caro60, aes(DatetimeUTC, speed)) +
+  geom_line(data=caro_9, aes(DatetimeUTC, speed)) +
+  geom_line(data=caro_6, aes(DatetimeUTC, speed)) +
+  geom_line(data=caro_3, aes(DatetimeUTC, speed)) +
+  scale_color_manual(values = mycolors4) +
+  theme_classic()
+
+```
+
 After completing the task, commit your changes to git using a good commit message.
+
+*Question:*
+
+-   *should we have sf_transformed the corrdinates in order to have a correct plot now? and if so, would all other calculations still have been with the original E/N coordinates, just as I did them?*
+-   *how can I exctract the hour from the Datetime column? do i need to mutate it into a new column?*
+
+## **Task 5: Deriving movement parameters II: Rolling window functions**
+
+A different approach would be to *smoothen* the derived parameters using a [moving window function](https://docs.wavefront.com/images/5sec_moving_window.png). The `zoo` package offers a variate of moving window functions (`roll_*`). Install this package, load it into the session and use the function `roll_mean()` to smooth the calculated speed. Familiarise yourself with this function by working on some dummy data, for example:
+
+```{r}
+library("zoo")
+
+example <- rnorm(10)
+rollmean(example, k = 3, fill = NA, align = "left")
+
+rollmean(example, k = 4, fill = NA, align = "left")
+```
+
+Now run `rollmean`on the `speed` variable of the subset (`caro`). Visualize the output from your moving windows and compare different window sizes (`k =`). After completing the task, commit your changes to git using a good commit message. **Additionally**, push all your commits to your remote repository on Github by clicking the green upwards pointing arrow in the Git pane in RStudio.
