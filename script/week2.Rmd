@@ -261,3 +261,77 @@ rollmean(example, k = 4, fill = NA, align = "left")
 ```
 
 Now run `rollmean`on the `speed` variable of the subset (`caro`). Visualize the output from your moving windows and compare different window sizes (`k =`). After completing the task, commit your changes to git using a good commit message. **Additionally**, push all your commits to your remote repository on Github by clicking the green upwards pointing arrow in the Git pane in RStudio.
+
+```{r}
+caro <- caro60 |> 
+  group_by(TierName) |> 
+  mutate(rollmean_3 = rollmean(speed, k=3, fill=NA, align="right"),
+         rollmean_4 = rollmean(speed, k=4, fill=NA, align= "right"), 
+         rollmean_5 = rollmean(speed, k=5, fill=NA, align="right"),
+         rollmean_10 = rollmean(speed, k=10, fill=NA, align="right"))
+```
+
+```{r}
+ggplot(caro, aes(x=DatetimeUTC, y=speed)) +
+  geom_line(aes(y=rollmean_3, color="rollmean_3")) +
+  geom_line(aes(y=rollmean_4, color="rollmean_4")) +
+  geom_line(aes(y=rollmean_5, color="rollmean_5")) +
+  geom_line(aes(y=rollmean_10, color="rollmean_10")) +
+  labs(color="Trajectory") +
+  scale_color_manual(values = mycolors4) +
+  theme_classic()
+```
+
+### **Task 6: Add your movement data to your repository**
+
+In the semester project, you will analyse your own movement data, either collected with the Posmo App or with the GPS Tracker (see [Chapter 2](https://computationalmovementanalysis.github.io/FS23/Intro/W0_2_preparations_project.html)). Acquire this data and save it to a subfolder of your current R Project named `data`. To acquire it, proceed as follows:
+
+-   Posmo App Users
+
+    1.  Go to [posmo.datamap.io](https://posmo.datamap.io/) and choose "Posmo Project"
+
+    2.  Click on the download button in the top right corner
+
+    3.  Choose an appropriate start and end date for which you want to download the data. Since you want all the data, you can choose 1. January until today
+
+    4.  Click on download
+
+    5.  Move the file from your downloads folder to the subfolder `data` in your current RStudio Project
+
+-   GPS Logger Users: Bring us your logger, we will extract your data and send it to you.
+
+### **Task 7: Explore your movement data**
+
+Now, import your data in the same way you imported the the wild boar data in [task 1](https://computationalmovementanalysis.github.io/FS23/Week2/W2_5_tasks_and_inputs.html#sec-w2-task1).
+
+```{r}
+lmove <- read_delim("private/lisa_dataset.csv")
+```
+
+Next, start exploring your data, similarly as you did in [task 2](https://computationalmovementanalysis.github.io/FS23/Week2/W2_5_tasks_and_inputs.html#sec-w2-task2). At a minimum:
+
+-   Import your data as a data frame and convert it to an `sf` object, using the correct CRS information
+
+```{r}
+lmove <- st_as_sf(lmove, coords = c("Latitude", "Longitude"), crs = 2056, remove = FALSE)
+```
+
+-   Convert your data to `CH1903+ LV95`
+
+```{r}
+as.POSIXlt(paste(lmove$Date, lmove$Time),
+                  format="%d.%m.%Y %H:%M:%S", tz="UTC")
+str(lmove)
+```
+
+-   Make a map of your data using `ggplot2` or `tmap`.
+
+```{r}
+lmove <- lmove |> 
+  group_by(Date) |> 
+  mutate(time_diff = as.integer(difftime(lead(DatetimeUTC, 1, default = NA, order_by = DatetimeUTC), DatetimeUTC, units = "secs")))
+```
+
+### **Submission**
+
+To submit your exercise, provide us with the URL of your Github repo as described [in the preperation](https://computationalmovementanalysis.github.io/FS23/Week2/W2_3_preparation.html#create-github-repo).
